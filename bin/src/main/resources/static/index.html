@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DonateHub</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+
+        <div class="logo">
+            DonateHub
+        </div>
+
+        <div class="nav-links">
+            <button onclick="showSection('dashboard')">Dashboard</button>
+            <button onclick="showSection('drives')">Drives</button>
+            <button onclick="showSection('donors')">Donors</button>
+            <button onclick="showSection('recipients')">Recipients</button>
+            <button onclick="showSection('items')">Donated Items</button>
+        </div>
+
+    </nav>
+
+
+    <!-- Main Container -->
+    <main class="container">
+
+
+        <!-- ================= DASHBOARD ================= -->
+
+        <section id="dashboard" class="section active">
+
+            <h1>DonateHub Dashboard</h1>
+
+            <p class="subtitle">
+                Manage donation drives, donors, recipients and donated items.
+            </p>
+
+            <div class="cards">
+
+                <div class="card">
+                    <h3>Donation Drives</h3>
+                    <p id="dashboardDriveCount">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Donors</h3>
+                    <p id="dashboardDonorCount">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Recipients</h3>
+                    <p id="dashboardRecipientCount">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Donated Items</h3>
+                    <p id="dashboardItemCount">0</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= DRIVES ================= -->
+
+        <section id="drives" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Donation Drives</h2>
+                    <p>Create and manage donation drives.</p>
+                </div>
+
+                <button class="primary-btn" onclick="openDriveForm()">
+                    + Add Drive
+                </button>
+
+            </div>
+
+
+            <!-- Drive Form -->
+
+            <div id="driveForm" class="form-card hidden">
+
+                <h3>Create Donation Drive</h3>
+
+                <form onsubmit="createDrive(event)">
+
+                    <label>Drive Name</label>
+
+                    <input
+                        type="text"
+                        id="driveName"
+                        placeholder="Example: Winter Donation Drive"
+                        required
+                    >
+
+                    <label>Start Date</label>
+
+                    <input
+                        type="date"
+                        id="driveStartDate"
+                        required
+                    >
+
+                    <label>End Date</label>
+
+                    <input
+                        type="date"
+                        id="driveEndDate"
+                        required
+                    >
+
+                    <div class="form-buttons">
+
+                        <button type="submit" class="primary-btn">
+                            Save Drive
+                        </button>
+
+                        <button
+                            type="button"
+                            class="secondary-btn"
+                            onclick="closeDriveForm()">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <div id="driveList" class="table-container">
+
+                <p>Loading drives...</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= DONORS ================= -->
+
+        <section id="donors" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Donors</h2>
+                    <p>Manage people who donate items.</p>
+                </div>
+
+                <button
+                    class="primary-btn"
+                    onclick="openDonorForm()">
+                    + Add Donor
+                </button>
+
+            </div>
+
+
+            <div id="donorForm" class="form-card hidden">
+
+                <h3>Add Donor</h3>
+
+                <form onsubmit="createDonor(event)">
+
+                    <label>Name</label>
+
+                    <input
+                        type="text"
+                        id="donorName"
+                        placeholder="Donor name"
+                        required
+                    >
+
+                    <label>Email</label>
+
+                    <input
+                        type="email"
+                        id="donorEmail"
+                        placeholder="Donor email"
+                        required
+                    >
+
+                    <div class="form-buttons">
+
+                        <button type="submit" class="primary-btn">
+                            Save Donor
+                        </button>
+
+                        <button
+                            type="button"
+                            class="secondary-btn"
+                            onclick="closeDonorForm()">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <div id="donorList" class="table-container">
+
+                <p>Loading donors...</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RECIPIENTS ================= -->
+
+        <section id="recipients" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Recipients</h2>
+                    <p>Manage organizations receiving donations.</p>
+                </div>
+
+                <button
+                    class="primary-btn"
+                    onclick="openRecipientForm()">
+                    + Add Recipient
+                </button>
+
+            </div>
+
+
+            <div id="recipientForm" class="form-card hidden">
+
+                <h3>Add Recipient</h3>
+
+                <form onsubmit="createRecipient(event)">
+
+                    <label>Name</label>
+
+                    <input
+                        type="text"
+                        id="recipientName"
+                        placeholder="Contact person name"
+                        required
+                    >
+
+                    <label>Organization</label>
+
+                    <input
+                        type="text"
+                        id="recipientOrganization"
+                        placeholder="Organization name"
+                        required
+                    >
+
+                    <div class="form-buttons">
+
+                        <button type="submit" class="primary-btn">
+                            Save Recipient
+                        </button>
+
+                        <button
+                            type="button"
+                            class="secondary-btn"
+                            onclick="closeRecipientForm()">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <div id="recipientList" class="table-container">
+
+                <p>Loading recipients...</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ITEMS ================= -->
+
+        <section id="items" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Donated Items</h2>
+                    <p>Track donated and distributed items.</p>
+                </div>
+
+                <button
+                    class="primary-btn"
+                    onclick="openItemForm()">
+                    + Add Donation
+                </button>
+
+            </div>
+
+
+            <!-- Donation Form -->
+
+            <div id="itemForm" class="form-card hidden">
+
+                <h3>Add Donation</h3>
+
+                <form onsubmit="createDonation(event)">
+
+                    <label>Category</label>
+
+                    <input
+                        type="text"
+                        id="itemCategory"
+                        placeholder="Example: Clothes"
+                        required
+                    >
+
+
+                    <label>Condition</label>
+
+                    <select id="itemCondition" required>
+
+                        <option value="">
+                            Select condition
+                        </option>
+
+                        <option value="NEW">
+                            New
+                        </option>
+
+                        <option value="GOOD">
+                            Good
+                        </option>
+
+                        <option value="WORN">
+                            Worn
+                        </option>
+
+                    </select>
+
+
+                    <label>Donation Date</label>
+
+                    <input
+                        type="date"
+                        id="itemDonationDate"
+                        required
+                    >
+
+
+                    <label>Drive</label>
+
+                    <select id="itemDrive" required>
+
+                        <option value="">
+                            Select drive
+                        </option>
+
+                    </select>
+
+
+                    <label>Donor</label>
+
+                    <select id="itemDonor" required>
+
+                        <option value="">
+                            Select donor
+                        </option>
+
+                    </select>
+
+
+                    <div class="form-buttons">
+
+                        <button type="submit" class="primary-btn">
+                            Save Donation
+                        </button>
+
+                        <button
+                            type="button"
+                            class="secondary-btn"
+                            onclick="closeItemForm()">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <div id="itemList" class="table-container">
+
+                <p>Loading items...</p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>

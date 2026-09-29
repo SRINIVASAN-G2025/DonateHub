@@ -30,4 +30,4 @@ public class DistributionRequest {
     public void setDistributionDate(LocalDate distributionDate) {
         this.distributionDate = distributionDate;
     }
-}
+}   

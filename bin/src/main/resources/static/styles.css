@@ -1,0 +1,637 @@
+/* =========================================================
+   DONATEHUB - MODERN UI
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f5f7fb;
+    color: #1f2937;
+    min-height: 100vh;
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.navbar {
+    background: linear-gradient(135deg, #123c69, #176b87);
+    color: white;
+    padding: 18px 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.logo::before {
+    content: "❤ ";
+    color: #7ee2b8;
+}
+
+.nav-links {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.nav-links button {
+    border: none;
+    background: transparent;
+    color: #ffffff;
+
+    padding: 10px 15px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    transition: all 0.2s ease;
+}
+
+.nav-links button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.container {
+    width: 92%;
+    max-width: 1250px;
+    margin: 40px auto;
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.section {
+    display: none;
+    animation: fadeIn 0.25s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section h1 {
+    font-size: 34px;
+    color: #123c69;
+    margin-bottom: 8px;
+}
+
+.section h2 {
+    font-size: 28px;
+    color: #123c69;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 15px;
+    margin-bottom: 30px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 25px;
+}
+
+.section-header p {
+    color: #718096;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: #ffffff;
+
+    padding: 25px;
+
+    border-radius: 14px;
+
+    box-shadow: 0 5px 20px rgba(31, 41, 55, 0.07);
+
+    border: 1px solid #e8edf3;
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition: transform 0.2s ease,
+                box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+
+    box-shadow: 0 10px 25px rgba(31, 41, 55, 0.12);
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+
+    width: 80px;
+    height: 80px;
+
+    border-radius: 50%;
+
+    background: #e8f7f1;
+
+    right: -25px;
+    top: -25px;
+}
+
+.card h3 {
+    color: #718096;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    margin-bottom: 14px;
+
+    position: relative;
+    z-index: 1;
+}
+
+.card p {
+    font-size: 34px;
+
+    font-weight: 700;
+
+    color: #176b87;
+
+    position: relative;
+    z-index: 1;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary-btn {
+    background: linear-gradient(135deg, #176b87, #16856c);
+
+    color: white;
+
+    border: none;
+
+    padding: 11px 19px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    box-shadow: 0 4px 10px rgba(23, 107, 135, 0.18);
+
+    transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-1px);
+
+    box-shadow: 0 6px 14px rgba(23, 107, 135, 0.25);
+}
+
+.secondary-btn {
+    background: #eef2f7;
+
+    color: #475569;
+
+    border: 1px solid #dce3eb;
+
+    padding: 11px 19px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+    background: #e2e8f0;
+}
+
+.danger-btn {
+    background: #ef4444;
+
+    color: white;
+
+    border: none;
+
+    padding: 8px 13px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+    background: #dc2626;
+
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   FORM CARD
+   ========================================================= */
+
+.form-card {
+    background: #ffffff;
+
+    padding: 28px;
+
+    margin-bottom: 25px;
+
+    border-radius: 14px;
+
+    border: 1px solid #e5eaf0;
+
+    box-shadow: 0 5px 20px rgba(31, 41, 55, 0.07);
+}
+
+.form-card h3 {
+    color: #123c69;
+
+    font-size: 20px;
+
+    margin-bottom: 22px;
+}
+
+.form-card form {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 16px;
+}
+
+.form-card label {
+    font-weight: 600;
+
+    font-size: 13px;
+
+    color: #475569;
+
+    margin-bottom: -8px;
+}
+
+.form-card input,
+.form-card select {
+    width: 100%;
+
+    padding: 12px 13px;
+
+    border: 1px solid #d8e0e8;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+
+    color: #1f2937;
+
+    background: #fbfcfe;
+
+    transition: all 0.2s ease;
+}
+
+.form-card input::placeholder {
+    color: #9aa5b1;
+}
+
+.form-card input:focus,
+.form-card select:focus {
+    outline: none;
+
+    border-color: #176b87;
+
+    background: white;
+
+    box-shadow: 0 0 0 3px rgba(23, 107, 135, 0.1);
+}
+
+.form-buttons {
+    grid-column: 1 / -1;
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-container {
+    background: #ffffff;
+
+    border-radius: 14px;
+
+    border: 1px solid #e5eaf0;
+
+    box-shadow: 0 5px 20px rgba(31, 41, 55, 0.07);
+
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 650px;
+}
+
+thead {
+    background: #123c69;
+
+    color: white;
+}
+
+th {
+    padding: 15px;
+
+    text-align: left;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    letter-spacing: 0.2px;
+}
+
+td {
+    padding: 14px 15px;
+
+    border-bottom: 1px solid #edf1f5;
+
+    font-size: 14px;
+
+    color: #475569;
+}
+
+tbody tr {
+    transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+    background: #f5faf9;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-available {
+    color: #16856c;
+
+    font-weight: 700;
+
+    background: #e8f7f1;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    display: inline-block;
+
+    font-size: 12px;
+}
+
+.status-distributed {
+    color: #64748b;
+
+    font-weight: 700;
+
+    background: #f1f5f9;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    display: inline-block;
+
+    font-size: 12px;
+}
+
+/* =========================================================
+   EMPTY MESSAGE
+   ========================================================= */
+
+.empty-message {
+    padding: 45px 20px;
+
+    text-align: center;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+}
+
+/* =========================================================
+   HIDDEN
+   ========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #b8c5d1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .navbar {
+        flex-direction: column;
+
+        gap: 15px;
+
+        padding: 18px 20px;
+    }
+
+    .nav-links {
+        justify-content: center;
+    }
+
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .container {
+        width: 94%;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .navbar {
+        align-items: center;
+    }
+
+    .logo {
+        font-size: 23px;
+    }
+
+    .nav-links {
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 5px;
+    }
+
+    .nav-links button {
+        width: 100%;
+        font-size: 12px;
+        padding: 9px 5px;
+    }
+
+    .container {
+        width: 94%;
+        margin: 25px auto;
+    }
+
+    .section h1 {
+        font-size: 28px;
+    }
+
+    .section h2 {
+        font-size: 24px;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+    .section-header .primary-btn {
+        width: 100%;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+
+    .form-card form {
+        grid-template-columns: 1fr;
+    }
+
+    .form-buttons {
+        flex-direction: column;
+    }
+
+    .form-buttons button {
+        width: 100%;
+    }
+
+    table {
+        min-width: 700px;
+    }
+}

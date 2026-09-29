@@ -1,17 +1,112 @@
+const API_BASE = "/api";
+
+
+
+/* =========================================================
+   COMMON HELPERS
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+
+async function getJson(url, options = {}) {
+
+    const response =
+        await fetch(url, options);
+
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = null;
+    }
+
+    return {
+        response,
+        data
+    };
+}
+
+
+
+function getErrorMessage(data, fallback) {
+
+    if (data && data.message) {
+        return data.message;
+    }
+
+    if (data && data.error) {
+        return data.error;
+    }
+
+    return fallback;
+}
+
+
+
+/* =========================================================
+   SECTION NAVIGATION
+   ========================================================= */
 
 function showSection(sectionId) {
 
-    const sections = document.querySelectorAll(".section");
+    const sections =
+        document.querySelectorAll(".section");
 
     sections.forEach(section => {
+
         section.classList.remove("active");
+
     });
 
-    const selectedSection = document.getElementById(sectionId);
 
-    if (selectedSection) {
-        selectedSection.classList.add("active");
+    const selectedSection =
+        document.getElementById(sectionId);
+
+    if (!selectedSection) {
+        return;
     }
+
+    selectedSection.classList.add("active");
+
+
+    const menuButtons =
+        document.querySelectorAll(".menu-btn");
+
+    menuButtons.forEach(button => {
+
+        button.classList.remove("active");
+
+        const onclickValue =
+            button.getAttribute("onclick");
+
+        if (
+            onclickValue &&
+            onclickValue.includes(
+                "'" + sectionId + "'"
+            )
+        ) {
+
+            button.classList.add("active");
+
+        }
+
+    });
+
 
     if (sectionId === "dashboard") {
         loadDashboard();
@@ -30,232 +125,244 @@ function showSection(sectionId) {
     }
 
     if (sectionId === "items") {
-        loadItems();
+        loadItems(false);
     }
+
 }
 
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
 async function loadDashboard() {
 
     try {
 
-        const drivesResponse = await fetch("/api/drives");
-        const donorsResponse = await fetch("/api/donors");
-        const recipientsResponse = await fetch("/api/recipients");
-        const itemsResponse = await fetch("/api/items");
+        const [
+            drivesResult,
+            donorsResult,
+            recipientsResult,
+            itemsResult
+        ] = await Promise.all([
 
-        const drives = await drivesResponse.json();
-        const donors = await donorsResponse.json();
-        const recipients = await recipientsResponse.json();
-        const items = await itemsResponse.json();
+            getJson(`${API_BASE}/drives`),
 
-        document.getElementById("dashboardDriveCount").textContent =
-            drives.length;
+            getJson(`${API_BASE}/donors`),
 
-        document.getElementById("dashboardDonorCount").textContent =
-            donors.length;
+            getJson(`${API_BASE}/recipients`),
 
-        document.getElementById("dashboardRecipientCount").textContent =
-            recipients.length;
+            getJson(`${API_BASE}/items`)
 
-        document.getElementById("dashboardItemCount").textContent =
-            items.length;
+        ]);
+
+
+        const driveCount =
+            document.getElementById(
+                "dashboardDriveCount"
+            );
+
+        const donorCount =
+            document.getElementById(
+                "dashboardDonorCount"
+            );
+
+        const recipientCount =
+            document.getElementById(
+                "dashboardRecipientCount"
+            );
+
+        const itemCount =
+            document.getElementById(
+                "dashboardItemCount"
+            );
+
+        const undistributedCount =
+            document.getElementById(
+                "dashboardUndistributedCount"
+            );
+
+
+        if (
+            drivesResult.response.ok &&
+            Array.isArray(drivesResult.data)
+        ) {
+
+            driveCount.textContent =
+                drivesResult.data.length;
+
+        }
+
+
+        if (
+            donorsResult.response.ok &&
+            Array.isArray(donorsResult.data)
+        ) {
+
+            donorCount.textContent =
+                donorsResult.data.length;
+
+        }
+
+
+        if (
+            recipientsResult.response.ok &&
+            Array.isArray(recipientsResult.data)
+        ) {
+
+            recipientCount.textContent =
+                recipientsResult.data.length;
+
+        }
+
+
+        if (
+            itemsResult.response.ok &&
+            Array.isArray(itemsResult.data)
+        ) {
+
+            const items =
+                itemsResult.data;
+
+            itemCount.textContent =
+                items.length;
+
+
+            const undistributedItems =
+                items.filter(
+                    item =>
+                        item.distributed !== true
+                );
+
+
+            undistributedCount.textContent =
+                undistributedItems.length;
+
+        }
 
     } catch (error) {
 
-        console.error("Dashboard loading error:", error);
+        console.error(
+            "Dashboard loading error:",
+            error
+        );
 
     }
+
 }
 
 
+
+/* =========================================================
+   DRIVES
+   ========================================================= */
 
 function openDriveForm() {
 
-    document
-        .getElementById("driveForm")
-        .classList.remove("hidden");
+    const form =
+        document.getElementById("driveForm");
+
+    form.classList.remove("hidden");
+
+    document.getElementById(
+        "driveName"
+    ).focus();
+
 }
+
+
 
 function closeDriveForm() {
 
-    document
-        .getElementById("driveForm")
-        .classList.add("hidden");
+    const form =
+        document.getElementById("driveForm");
+
+    form.classList.add("hidden");
+
+    const formElement =
+        form.querySelector("form");
+
+    if (formElement) {
+        formElement.reset();
+    }
+
 }
+
 
 
 async function createDrive(event) {
 
     event.preventDefault();
 
-    const drive = {
 
-        name: document.getElementById("driveName").value,
+    const name =
+        document.getElementById(
+            "driveName"
+        ).value.trim();
 
-        startDate:
-            document.getElementById("driveStartDate").value,
+    const startDate =
+        document.getElementById(
+            "driveStartDate"
+        ).value;
 
-        endDate:
-            document.getElementById("driveEndDate").value
-    };
-
-    try {
-
-        const response = await fetch("/api/drives", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(drive)
-        });
-
-        if (!response.ok) {
-
-            const error = await response.json();
-
-            alert(error.message || "Unable to create drive");
-
-            return;
-        }
-
-        alert("Drive created successfully!");
-
-        document.querySelector("#driveForm form").reset();
-
-        closeDriveForm();
-
-        loadDrives();
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Server connection failed.");
-
-    }
-}
+    const endDate =
+        document.getElementById(
+            "driveEndDate"
+        ).value;
 
 
-async function loadDrives() {
+    if (endDate < startDate) {
 
-    const container = document.getElementById("driveList");
+        alert(
+            "End date cannot be before start date."
+        );
 
-    container.innerHTML = "<p class='empty-message'>Loading drives...</p>";
-
-    try {
-
-        const response = await fetch("/api/drives");
-
-        if (!response.ok) {
-            throw new Error("Failed to load drives");
-        }
-
-        const drives = await response.json();
-
-        if (drives.length === 0) {
-
-            container.innerHTML =
-                "<p class='empty-message'>No donation drives found.</p>";
-
-            return;
-        }
-
-        let html = `
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Action</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-        `;
-
-        drives.forEach(drive => {
-
-            html += `
-                <tr>
-
-                    <td>${drive.id}</td>
-
-                    <td>${escapeHtml(drive.name)}</td>
-
-                    <td>${drive.startDate}</td>
-
-                    <td>${drive.endDate}</td>
-
-                    <td>
-                        <button
-                            class="danger-btn"
-                            onclick="deleteDrive(${drive.id})">
-                            Delete
-                        </button>
-                    </td>
-
-                </tr>
-            `;
-
-        });
-
-        html += `
-                </tbody>
-            </table>
-        `;
-
-        container.innerHTML = html;
-
-    } catch (error) {
-
-        console.error(error);
-
-        container.innerHTML =
-            "<p class='empty-message'>Unable to load drives.</p>";
-    }
-}
-
-
-// ======================================================
-// DELETE DRIVE
-// ======================================================
-
-async function deleteDrive(id) {
-
-    const confirmed =
-        confirm("Are you sure you want to delete this drive?");
-
-    if (!confirmed) {
         return;
     }
 
+
     try {
 
-        const response = await fetch(`/api/drives/${id}`, {
+        const result =
+            await getJson(
+                `${API_BASE}/drives`,
+                {
+                    method: "POST",
 
-            method: "DELETE"
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-        });
+                    body: JSON.stringify({
+                        name,
+                        startDate,
+                        endDate
+                    })
+                }
+            );
 
-        if (!response.ok) {
 
-            const error = await response.json();
+        if (!result.response.ok) {
 
-            alert(error.message || "Unable to delete drive");
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to create drive."
+                )
+            );
 
             return;
         }
 
-        alert("Drive deleted successfully!");
+
+        alert(
+            "Donation drive created successfully."
+        );
+
+
+        closeDriveForm();
 
         loadDrives();
 
@@ -265,71 +372,308 @@ async function deleteDrive(id) {
 
         console.error(error);
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
 
-// ======================================================
-// DONOR FORM
-// ======================================================
+
+async function loadDrives() {
+
+    const container =
+        document.getElementById(
+            "driveList"
+        );
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML =
+        "<p>Loading drives...</p>";
+
+
+    try {
+
+        const result =
+            await getJson(
+                `${API_BASE}/drives`
+            );
+
+
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
+
+            container.innerHTML =
+                "<p>Unable to load drives.</p>";
+
+            return;
+        }
+
+
+        const drives =
+            result.data;
+
+
+        if (drives.length === 0) {
+
+            container.innerHTML =
+                "<p>No donation drives found.</p>";
+
+            return;
+        }
+
+
+        let html = `
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Name</th>
+
+                        <th>Start Date</th>
+
+                        <th>End Date</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+        `;
+
+
+        drives.forEach(drive => {
+
+            html += `
+
+                <tr>
+
+                    <td>
+                        ${drive.id}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(drive.name)}
+                    </td>
+
+                    <td>
+                        ${drive.startDate}
+                    </td>
+
+                    <td>
+                        ${drive.endDate}
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="table-btn delete-btn"
+                            onclick="deleteDrive(${drive.id})">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        });
+
+
+        html += `
+
+                </tbody>
+
+            </table>
+
+        `;
+
+
+        container.innerHTML =
+            html;
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            "<p>Unable to load drives.</p>";
+
+    }
+
+}
+
+
+
+async function deleteDrive(id) {
+
+    if (
+        !confirm(
+            "Delete this drive?"
+        )
+    ) {
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await getJson(
+                `${API_BASE}/drives/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!result.response.ok) {
+
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to delete drive."
+                )
+            );
+
+            return;
+        }
+
+
+        alert(
+            "Drive deleted successfully."
+        );
+
+
+        loadDrives();
+
+        loadDashboard();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to connect to server."
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   DONORS
+   ========================================================= */
 
 function openDonorForm() {
 
     document
         .getElementById("donorForm")
         .classList.remove("hidden");
+
+    document
+        .getElementById("donorName")
+        .focus();
+
 }
+
+
 
 function closeDonorForm() {
 
-    document
-        .getElementById("donorForm")
-        .classList.add("hidden");
+    const form =
+        document.getElementById(
+            "donorForm"
+        );
+
+    form.classList.add("hidden");
+
+    const formElement =
+        form.querySelector("form");
+
+    if (formElement) {
+        formElement.reset();
+    }
+
 }
 
 
-// ======================================================
-// CREATE DONOR
-// ======================================================
 
 async function createDonor(event) {
 
     event.preventDefault();
 
-    const donor = {
 
-        name: document.getElementById("donorName").value,
+    const name =
+        document.getElementById(
+            "donorName"
+        ).value.trim();
 
-        email: document.getElementById("donorEmail").value
-    };
+    const email =
+        document.getElementById(
+            "donorEmail"
+        ).value.trim();
+
 
     try {
 
-        const response = await fetch("/api/donors", {
+        const result =
+            await getJson(
+                `${API_BASE}/donors`,
+                {
+                    method: "POST",
 
-            method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                    body: JSON.stringify({
+                        name,
+                        email
+                    })
+                }
+            );
 
-            body: JSON.stringify(donor)
-        });
 
-        if (!response.ok) {
+        if (!result.response.ok) {
 
-            const error = await response.json();
-
-            alert(error.message || "Unable to create donor");
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to create donor."
+                )
+            );
 
             return;
         }
 
-        alert("Donor created successfully!");
 
-        document.querySelector("#donorForm form").reset();
+        alert(
+            "Donor created successfully."
+        );
+
 
         closeDonorForm();
 
@@ -341,125 +685,191 @@ async function createDonor(event) {
 
         console.error(error);
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
 
-// ======================================================
-// LOAD DONORS
-// ======================================================
 
 async function loadDonors() {
 
-    const container = document.getElementById("donorList");
+    const container =
+        document.getElementById(
+            "donorList"
+        );
+
+    if (!container) {
+        return;
+    }
+
 
     container.innerHTML =
-        "<p class='empty-message'>Loading donors...</p>";
+        "<p>Loading donors...</p>";
+
 
     try {
 
-        const response = await fetch("/api/donors");
+        const result =
+            await getJson(
+                `${API_BASE}/donors`
+            );
 
-        const donors = await response.json();
 
-        if (donors.length === 0) {
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
 
             container.innerHTML =
-                "<p class='empty-message'>No donors found.</p>";
+                "<p>Unable to load donors.</p>";
 
             return;
         }
 
+
+        const donors =
+            result.data;
+
+
+        if (donors.length === 0) {
+
+            container.innerHTML =
+                "<p>No donors found.</p>";
+
+            return;
+        }
+
+
         let html = `
+
             <table>
 
                 <thead>
 
                     <tr>
+
                         <th>ID</th>
+
                         <th>Name</th>
+
                         <th>Email</th>
+
                         <th>Action</th>
+
                     </tr>
 
                 </thead>
 
                 <tbody>
+
         `;
+
 
         donors.forEach(donor => {
 
             html += `
+
                 <tr>
 
-                    <td>${donor.id}</td>
+                    <td>
+                        ${donor.id}
+                    </td>
 
-                    <td>${escapeHtml(donor.name)}</td>
+                    <td>
+                        ${escapeHtml(donor.name)}
+                    </td>
 
-                    <td>${escapeHtml(donor.email)}</td>
+                    <td>
+                        ${escapeHtml(donor.email)}
+                    </td>
 
                     <td>
 
                         <button
-                            class="danger-btn"
+                            class="table-btn delete-btn"
                             onclick="deleteDonor(${donor.id})">
+
                             Delete
+
                         </button>
 
                     </td>
 
                 </tr>
+
             `;
 
         });
 
+
         html += `
+
                 </tbody>
+
             </table>
+
         `;
 
-        container.innerHTML = html;
+
+        container.innerHTML =
+            html;
 
     } catch (error) {
 
         console.error(error);
 
         container.innerHTML =
-            "<p class='empty-message'>Unable to load donors.</p>";
+            "<p>Unable to load donors.</p>";
+
     }
+
 }
 
 
-// ======================================================
-// DELETE DONOR
-// ======================================================
 
 async function deleteDonor(id) {
 
-    if (!confirm("Are you sure you want to delete this donor?")) {
+    if (
+        !confirm(
+            "Delete this donor?"
+        )
+    ) {
         return;
     }
 
+
     try {
 
-        const response = await fetch(`/api/donors/${id}`, {
+        const result =
+            await getJson(
+                `${API_BASE}/donors/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
-            method: "DELETE"
 
-        });
+        if (!result.response.ok) {
 
-        if (!response.ok) {
-
-            const error = await response.json();
-
-            alert(error.message || "Unable to delete donor");
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to delete donor."
+                )
+            );
 
             return;
         }
 
-        alert("Donor deleted successfully!");
+
+        alert(
+            "Donor deleted successfully."
+        );
+
 
         loadDonors();
 
@@ -469,73 +879,108 @@ async function deleteDonor(id) {
 
         console.error(error);
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
 
-// ======================================================
-// RECIPIENT FORM
-// ======================================================
+
+/* =========================================================
+   RECIPIENTS
+   ========================================================= */
 
 function openRecipientForm() {
 
     document
         .getElementById("recipientForm")
         .classList.remove("hidden");
+
+    document
+        .getElementById("recipientName")
+        .focus();
+
 }
+
+
 
 function closeRecipientForm() {
 
-    document
-        .getElementById("recipientForm")
-        .classList.add("hidden");
+    const form =
+        document.getElementById(
+            "recipientForm"
+        );
+
+    form.classList.add("hidden");
+
+    const formElement =
+        form.querySelector("form");
+
+    if (formElement) {
+        formElement.reset();
+    }
+
 }
 
 
-// ======================================================
-// CREATE RECIPIENT
-// ======================================================
 
 async function createRecipient(event) {
 
     event.preventDefault();
 
-    const recipient = {
 
-        name:
-            document.getElementById("recipientName").value,
+    const name =
+        document.getElementById(
+            "recipientName"
+        ).value.trim();
 
-        organization:
-            document.getElementById("recipientOrganization").value
-    };
+    const organization =
+        document.getElementById(
+            "recipientOrganization"
+        ).value.trim();
+
 
     try {
 
-        const response = await fetch("/api/recipients", {
+        const result =
+            await getJson(
+                `${API_BASE}/recipients`,
+                {
+                    method: "POST",
 
-            method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                    body: JSON.stringify({
+                        name,
+                        organization
+                    })
+                }
+            );
 
-            body: JSON.stringify(recipient)
-        });
 
-        if (!response.ok) {
+        if (!result.response.ok) {
 
-            const error = await response.json();
-
-            alert(error.message || "Unable to create recipient");
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to create recipient."
+                )
+            );
 
             return;
         }
 
-        alert("Recipient created successfully!");
 
-        document.querySelector("#recipientForm form").reset();
+        alert(
+            "Recipient created successfully."
+        );
+
 
         closeRecipientForm();
 
@@ -547,126 +992,197 @@ async function createRecipient(event) {
 
         console.error(error);
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
 
-// ======================================================
-// LOAD RECIPIENTS
-// ======================================================
 
 async function loadRecipients() {
 
     const container =
-        document.getElementById("recipientList");
+        document.getElementById(
+            "recipientList"
+        );
+
+    if (!container) {
+        return;
+    }
+
 
     container.innerHTML =
-        "<p class='empty-message'>Loading recipients...</p>";
+        "<p>Loading recipients...</p>";
+
 
     try {
 
-        const response =
-            await fetch("/api/recipients");
+        const result =
+            await getJson(
+                `${API_BASE}/recipients`
+            );
 
-        const recipients =
-            await response.json();
 
-        if (recipients.length === 0) {
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
 
             container.innerHTML =
-                "<p class='empty-message'>No recipients found.</p>";
+                "<p>Unable to load recipients.</p>";
 
             return;
         }
 
+
+        const recipients =
+            result.data;
+
+
+        if (recipients.length === 0) {
+
+            container.innerHTML =
+                "<p>No recipients found.</p>";
+
+            return;
+        }
+
+
         let html = `
+
             <table>
 
                 <thead>
 
                     <tr>
-                        <th>ID</th>
+
+                        <th>No.</th>
+
                         <th>Name</th>
+
                         <th>Organization</th>
+
                         <th>Action</th>
+
                     </tr>
 
                 </thead>
 
                 <tbody>
+
         `;
 
-        recipients.forEach(recipient => {
 
-            html += `
-                <tr>
+        recipients.forEach(
+            (recipient, index) => {
 
-                    <td>${recipient.id}</td>
+                html += `
 
-                    <td>${escapeHtml(recipient.name)}</td>
+                    <tr>
 
-                    <td>${escapeHtml(recipient.organization)}</td>
+                        <td>
+                            ${index + 1}
+                        </td>
 
-                    <td>
+                        <td>
+                            ${escapeHtml(
+                                recipient.name
+                            )}
+                        </td>
 
-                        <button
-                            class="danger-btn"
-                            onclick="deleteRecipient(${recipient.id})">
-                            Delete
-                        </button>
+                        <td>
+                            ${escapeHtml(
+                                recipient.organization
+                            )}
+                        </td>
 
-                    </td>
+                        <td>
 
-                </tr>
-            `;
+                            <button
+                                class="table-btn delete-btn"
+                                onclick="deleteRecipient(${recipient.id})">
 
-        });
+                                Delete
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        );
+
 
         html += `
+
                 </tbody>
+
             </table>
+
         `;
 
-        container.innerHTML = html;
+
+        container.innerHTML =
+            html;
 
     } catch (error) {
 
         console.error(error);
 
         container.innerHTML =
-            "<p class='empty-message'>Unable to load recipients.</p>";
+            "<p>Unable to load recipients.</p>";
+
     }
+
 }
 
 
 
 async function deleteRecipient(id) {
 
-    if (!confirm("Are you sure you want to delete this recipient?")) {
+    if (
+        !confirm(
+            "Delete this recipient?"
+        )
+    ) {
         return;
     }
 
+
     try {
 
-        const response =
-            await fetch(`/api/recipients/${id}`, {
+        const result =
+            await getJson(
+                `${API_BASE}/recipients/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
-                method: "DELETE"
 
-            });
+        if (!result.response.ok) {
 
-        if (!response.ok) {
-
-            const error = await response.json();
-
-            alert(error.message || "Unable to delete recipient");
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to delete recipient."
+                )
+            );
 
             return;
         }
 
-        alert("Recipient deleted successfully!");
+
+        alert(
+            "Recipient deleted successfully."
+        );
+
 
         loadRecipients();
 
@@ -676,187 +1192,469 @@ async function deleteRecipient(id) {
 
         console.error(error);
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
-function openItemForm() {
 
-    document
-        .getElementById("itemForm")
-        .classList.remove("hidden");
 
-    loadDriveDropdown();
+/* =========================================================
+   DONATION FORM
+   ========================================================= */
 
-    loadDonorDropdown();
+async function openItemForm() {
+
+    const form =
+        document.getElementById(
+            "itemForm"
+        );
+
+    form.classList.remove("hidden");
+
+
+    const today =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+
+    document.getElementById(
+        "itemDonationDate"
+    ).value = today;
+
+
+    await Promise.all([
+
+        loadDrivesIntoSelect(),
+
+        loadDonorsIntoSelect()
+
+    ]);
+
+
+    document.getElementById(
+        "itemCategory"
+    ).focus();
+
 }
+
+
 
 function closeItemForm() {
 
-    document
-        .getElementById("itemForm")
-        .classList.add("hidden");
+    const form =
+        document.getElementById(
+            "itemForm"
+        );
+
+    form.classList.add("hidden");
+
+
+    const formElement =
+        form.querySelector("form");
+
+    if (formElement) {
+        formElement.reset();
+    }
+
 }
 
-async function loadDriveDropdown() {
+
+
+async function loadDrivesIntoSelect() {
 
     const select =
-        document.getElementById("itemDrive");
+        document.getElementById(
+            "itemDrive"
+        );
+
+    if (!select) {
+        return;
+    }
+
 
     try {
 
-        const response =
-            await fetch("/api/drives");
+        const result =
+            await getJson(
+                `${API_BASE}/drives`
+            );
 
-        const drives =
-            await response.json();
 
-        select.innerHTML =
-            `<option value="">Select drive</option>`;
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
+            return;
+        }
 
-        drives.forEach(drive => {
 
-            select.innerHTML += `
-                <option value="${drive.id}">
-                    ${escapeHtml(drive.name)}
-                </option>
-            `;
+        select.innerHTML = `
+
+            <option value="">
+                Select drive
+            </option>
+
+        `;
+
+
+        result.data.forEach(drive => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                drive.id;
+
+            option.textContent =
+                drive.name;
+
+            select.appendChild(
+                option
+            );
 
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Drive select loading error:",
+            error
+        );
 
     }
+
 }
 
 
-async function loadDonorDropdown() {
+
+async function loadDonorsIntoSelect() {
 
     const select =
-        document.getElementById("itemDonor");
+        document.getElementById(
+            "itemDonor"
+        );
+
+    if (!select) {
+        return;
+    }
+
 
     try {
 
-        const response =
-            await fetch("/api/donors");
+        const result =
+            await getJson(
+                `${API_BASE}/donors`
+            );
 
-        const donors =
-            await response.json();
 
-        select.innerHTML =
-            `<option value="">Select donor</option>`;
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
+            return;
+        }
 
-        donors.forEach(donor => {
 
-            select.innerHTML += `
-                <option value="${donor.id}">
-                    ${escapeHtml(donor.name)}
-                </option>
-            `;
+        select.innerHTML = `
+
+            <option value="">
+                Select donor
+            </option>
+
+        `;
+
+
+        result.data.forEach(donor => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                donor.id;
+
+            option.textContent =
+                donor.name;
+
+            select.appendChild(
+                option
+            );
 
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Donor select loading error:",
+            error
+        );
 
     }
+
 }
 
+
+
+/* =========================================================
+   CREATE DONATION
+   ========================================================= */
 
 async function createDonation(event) {
 
     event.preventDefault();
 
-    const donation = {
 
-        category:
-            document.getElementById("itemCategory").value,
+    const category =
+        document.getElementById(
+            "itemCategory"
+        ).value.trim();
 
-        condition:
-            document.getElementById("itemCondition").value,
+    const condition =
+        document.getElementById(
+            "itemCondition"
+        ).value;
 
-        donationDate:
-            document.getElementById("itemDonationDate").value,
+    const donationDate =
+        document.getElementById(
+            "itemDonationDate"
+        ).value;
 
-        driveId:
-            Number(document.getElementById("itemDrive").value),
+    const driveId =
+        document.getElementById(
+            "itemDrive"
+        ).value;
 
-        donorId:
-            Number(document.getElementById("itemDonor").value)
-    };
+    const donorId =
+        document.getElementById(
+            "itemDonor"
+        ).value;
+
+
+    if (!category) {
+
+        alert(
+            "Please enter item category."
+        );
+
+        return;
+    }
+
+
+    if (!condition) {
+
+        alert(
+            "Please select item condition."
+        );
+
+        return;
+    }
+
+
+    if (!donationDate) {
+
+        alert(
+            "Please select donation date."
+        );
+
+        return;
+    }
+
+
+    if (!driveId) {
+
+        alert(
+            "Please select a drive."
+        );
+
+        return;
+    }
+
+
+    if (!donorId) {
+
+        alert(
+            "Please select a donor."
+        );
+
+        return;
+    }
+
 
     try {
 
-        const response =
-            await fetch("/api/items", {
+        const result =
+            await getJson(
+                `${API_BASE}/items`,
+                {
+                    method: "POST",
 
-                method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    body: JSON.stringify({
 
-                body: JSON.stringify(donation)
+                        category,
 
-            });
+                        condition,
 
-        if (!response.ok) {
+                        donationDate,
 
-            const error = await response.json();
+                        driveId:
+                            Number(driveId),
 
-            alert(error.message || "Unable to create donation");
+                        donorId:
+                            Number(donorId)
+
+                    })
+                }
+            );
+
+
+        if (!result.response.ok) {
+
+            alert(
+                getErrorMessage(
+                    result.data,
+                    "Unable to save donation."
+                )
+            );
 
             return;
         }
 
-        alert("Donation created successfully!");
 
-        document.querySelector("#itemForm form").reset();
+        alert(
+            "Donation saved successfully."
+        );
+
 
         closeItemForm();
 
-        loadItems();
+        loadItems(false);
 
         loadDashboard();
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Donation creation error:",
+            error
+        );
 
-        alert("Server connection failed.");
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
-async function loadItems() {
+
+
+/* =========================================================
+   DONATED ITEMS
+   ========================================================= */
+
+async function loadItems(
+    availableOnly = false
+) {
 
     const container =
-        document.getElementById("itemList");
+        document.getElementById(
+            "itemList"
+        );
+
+    if (!container) {
+        return;
+    }
+
 
     container.innerHTML =
-        "<p class='empty-message'>Loading donated items...</p>";
+        "<p>Loading donated items...</p>";
+
+
+    const allItemsBtn =
+        document.getElementById(
+            "allItemsBtn"
+        );
+
+    const availableItemsBtn =
+        document.getElementById(
+            "availableItemsBtn"
+        );
+
+
+    if (allItemsBtn) {
+
+        allItemsBtn.classList.toggle(
+            "active",
+            !availableOnly
+        );
+
+    }
+
+
+    if (availableItemsBtn) {
+
+        availableItemsBtn.classList.toggle(
+            "active",
+            availableOnly
+        );
+
+    }
+
 
     try {
 
-        const response =
-            await fetch("/api/items");
+        const url =
+            availableOnly
+                ? `${API_BASE}/items/available`
+                : `${API_BASE}/items`;
 
-        const items =
-            await response.json();
 
-        if (items.length === 0) {
+        const result =
+            await getJson(url);
+
+
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
 
             container.innerHTML =
-                "<p class='empty-message'>No donated items found.</p>";
+                "<p>Unable to load donated items.</p>";
 
             return;
         }
 
+
+        const items =
+            result.data;
+
+
+        if (items.length === 0) {
+
+            container.innerHTML =
+                availableOnly
+                    ? "<p>No undistributed items remaining in stock.</p>"
+                    : "<p>No donated items found.</p>";
+
+            return;
+        }
+
+
         let html = `
+
             <table>
 
                 <thead>
@@ -871,9 +1669,9 @@ async function loadItems() {
 
                         <th>Donation Date</th>
 
-                        <th>Donor</th>
-
                         <th>Drive</th>
+
+                        <th>Donor</th>
 
                         <th>Status</th>
 
@@ -884,205 +1682,543 @@ async function loadItems() {
                 </thead>
 
                 <tbody>
+
         `;
 
-        items.forEach(item => {
 
-            const status =
-                item.distributed
-                    ? "Distributed"
-                    : "Available";
+        items.forEach(
+            (item, index) => {
 
-            const statusClass =
-                item.distributed
-                    ? "status-distributed"
-                    : "status-available";
+                const distributed =
+                    item.distributed === true;
 
-            const donorName =
-                item.donor
-                    ? item.donor.name
-                    : "-";
 
-            const driveName =
-                item.drive
-                    ? item.drive.name
-                    : "-";
+                const driveName =
+                    item.drive
+                        ? item.drive.name
+                        : "-";
 
-            html += `
-                <tr>
 
-                    <td>${item.id}</td>
+                const donorName =
+                    item.donor
+                        ? item.donor.name
+                        : "-";
 
-                    <td>${escapeHtml(item.category)}</td>
 
-                    <td>${item.condition}</td>
+                html += `
 
-                    <td>${item.donationDate}</td>
+                    <tr>
 
-                    <td>${escapeHtml(donorName)}</td>
+                        <td>
+                            ${index + 1}
+                        </td>
 
-                    <td>${escapeHtml(driveName)}</td>
+                        <td>
+                            ${escapeHtml(
+                                item.category
+                            )}
+                        </td>
 
-                    <td class="${statusClass}">
-                        ${status}
-                    </td>
+                        <td>
+                            ${escapeHtml(
+                                item.condition
+                            )}
+                        </td>
 
-                    <td>
+                        <td>
+                            ${item.donationDate}
+                        </td>
 
-                        ${
-                            item.distributed
-                            ?
-                            "-"
-                            :
-                            `
-                            <button
-                                class="primary-btn"
-                                onclick="distributeItem(${item.id})">
-                                Distribute
-                            </button>
-                            `
-                        }
+                        <td>
+                            ${escapeHtml(
+                                driveName
+                            )}
+                        </td>
 
-                    </td>
+                        <td>
+                            ${escapeHtml(
+                                donorName
+                            )}
+                        </td>
 
-                </tr>
-            `;
+                        <td>
 
-        });
+                            ${
+                                distributed
+
+                                ? `
+
+                                    <span
+                                        class="status-badge status-distributed">
+
+                                        Distributed
+
+                                    </span>
+
+                                  `
+
+                                : `
+
+                                    <span
+                                        class="status-badge status-available">
+
+                                        Available
+
+                                    </span>
+
+                                  `
+                            }
+
+                        </td>
+
+                        <td>
+
+                            ${
+                                !distributed
+
+                                ? `
+
+                                    <button
+                                        class="table-btn distribute-btn"
+                                        onclick="openDistributionModal(${item.id})">
+
+                                        Distribute
+
+                                    </button>
+
+                                  `
+
+                                : `
+
+                                    <span>
+                                        -
+                                    </span>
+
+                                  `
+                            }
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        );
+
 
         html += `
+
                 </tbody>
+
             </table>
+
         `;
 
-        container.innerHTML = html;
+
+        container.innerHTML =
+            html;
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Donated items loading error:",
+            error
+        );
 
         container.innerHTML =
-            "<p class='empty-message'>Unable to load donated items.</p>";
+            "<p>Unable to load donated items.</p>";
+
     }
+
 }
 
 
-async function distributeItem(itemId) {
+
+/* =========================================================
+   DISTRIBUTION MODAL
+   ========================================================= */
+
+async function openDistributionModal(
+    itemId
+) {
+
+    const modal =
+        document.getElementById(
+            "distributionModal"
+        );
+
+    const itemIdInput =
+        document.getElementById(
+            "distributionItemId"
+        );
+
+    const recipientSelect =
+        document.getElementById(
+            "distributionRecipient"
+        );
+
+    const distributionDate =
+        document.getElementById(
+            "distributionDate"
+        );
+
+
+    if (
+        !modal ||
+        !itemIdInput ||
+        !recipientSelect ||
+        !distributionDate
+    ) {
+
+        console.error(
+            "Distribution modal elements not found."
+        );
+
+        return;
+    }
+
+
+    itemIdInput.value =
+        itemId;
+
+
+    distributionDate.value =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+
+    recipientSelect.innerHTML = `
+
+        <option value="">
+            Loading recipients...
+        </option>
+
+    `;
+
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+
+    await loadRecipientsForDistribution();
+
+}
+
+
+
+async function loadRecipientsForDistribution() {
+
+    const select =
+        document.getElementById(
+            "distributionRecipient"
+        );
+
+    if (!select) {
+        return;
+    }
+
 
     try {
 
-        const recipientResponse =
-            await fetch("/api/recipients");
+        const result =
+            await getJson(
+                `${API_BASE}/recipients`
+            );
+
+
+        if (
+            !result.response.ok ||
+            !Array.isArray(result.data)
+        ) {
+
+            select.innerHTML = `
+
+                <option value="">
+                    Unable to load recipients
+                </option>
+
+            `;
+
+            return;
+        }
+
 
         const recipients =
-            await recipientResponse.json();
+            result.data;
+
 
         if (recipients.length === 0) {
 
-            alert(
-                "Please create at least one recipient first."
-            );
+            select.innerHTML = `
+
+                <option value="">
+                    No recipients available
+                </option>
+
+            `;
 
             return;
         }
 
-        let message =
-            "Select Recipient ID:\n\n";
 
-        recipients.forEach(recipient => {
+        select.innerHTML = `
 
-            message +=
-                `${recipient.id} - ${recipient.name} (${recipient.organization})\n`;
+            <option value="">
+                Select recipient
+            </option>
 
-        });
+        `;
 
-        const recipientId =
-            prompt(message);
 
-        if (!recipientId) {
-            return;
-        }
+        recipients.forEach(
+            recipient => {
 
-        const distributionDate =
-            prompt(
-                "Enter distribution date (YYYY-MM-DD):"
-            );
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-        if (!distributionDate) {
-            return;
-        }
 
-        const request = {
+                option.value =
+                    recipient.id;
 
-            recipientId:
-                Number(recipientId),
 
-            distributionDate:
-                distributionDate
-        };
+                option.textContent =
+                    `${recipient.name} - ${recipient.organization}`;
 
-        const response =
-            await fetch(
-                `/api/items/${itemId}/distribute`,
+
+                select.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Recipient loading error:",
+            error
+        );
+
+
+        select.innerHTML = `
+
+            <option value="">
+                Unable to load recipients
+            </option>
+
+        `;
+
+    }
+
+}
+
+
+
+function closeDistributionModal() {
+
+    const modal =
+        document.getElementById(
+            "distributionModal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.add(
+        "hidden"
+    );
+
+
+    const form =
+        modal.querySelector("form");
+
+    if (form) {
+        form.reset();
+    }
+
+
+    const itemId =
+        document.getElementById(
+            "distributionItemId"
+        );
+
+    if (itemId) {
+        itemId.value = "";
+    }
+
+}
+
+
+
+async function confirmDistribution(
+    event
+) {
+
+    event.preventDefault();
+
+
+    const itemId =
+        document.getElementById(
+            "distributionItemId"
+        ).value;
+
+
+    const recipientId =
+        document.getElementById(
+            "distributionRecipient"
+        ).value;
+
+
+    const distributionDate =
+        document.getElementById(
+            "distributionDate"
+        ).value;
+
+
+    if (!itemId) {
+
+        alert(
+            "Invalid donated item."
+        );
+
+        return;
+    }
+
+
+    if (!recipientId) {
+
+        alert(
+            "Please select a recipient."
+        );
+
+        return;
+    }
+
+
+    if (!distributionDate) {
+
+        alert(
+            "Please select distribution date."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await getJson(
+                `${API_BASE}/items/${itemId}/distribute`,
                 {
-
                     method: "POST",
 
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type":
+                            "application/json"
                     },
 
-                    body: JSON.stringify(request)
+                    body: JSON.stringify({
+
+                        recipientId:
+                            Number(recipientId),
+
+                        distributionDate:
+                            distributionDate
+
+                    })
                 }
             );
 
-        if (!response.ok) {
 
-            const error = await response.json();
+        if (!result.response.ok) {
 
             alert(
-                error.message ||
-                "Unable to distribute item"
+                getErrorMessage(
+                    result.data,
+                    "Unable to distribute item."
+                )
             );
 
             return;
         }
 
-        alert("Item distributed successfully!");
 
-        loadItems();
+        alert(
+            "Item distributed successfully."
+        );
+
+
+        closeDistributionModal();
+
+
+        loadItems(false);
 
         loadDashboard();
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Distribution error:",
+            error
+        );
 
-        alert("Server connection failed.");
+
+        alert(
+            "Unable to connect to server."
+        );
 
     }
+
 }
 
 
 
-function escapeHtml(value) {
+/* =========================================================
+   PAGE LOAD
+   ========================================================= */
 
-    if (value === null || value === undefined) {
-        return "";
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const sections =
+            document.querySelectorAll(
+                ".section"
+            );
+
+
+        sections.forEach(
+            section =>
+                section.classList.remove(
+                    "active"
+                )
+        );
+
+
+        const dashboard =
+            document.getElementById(
+                "dashboard"
+            );
+
+
+        if (dashboard) {
+            dashboard.classList.add(
+                "active"
+            );
+        }
+
+
+        showSection(
+            "dashboard"
+        );
+
     }
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    loadDashboard();
-
-});
+);
